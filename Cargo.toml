@@ -6,6 +6,10 @@ name = "protoviz"
 version = "0.1.0"
 edition = "2021"
 authors = ["Daniel Stuart <daniel.stuart14@gmail.com>"]
+license = "GPL-2.0-only"
+description = "A binary protocol visualizer (Generates svg figures for documentation)"
+repository = "https://github.com/danielstuart14/protoviz"
+keywords = ["protocol", "documentation", "svg", "binary"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
