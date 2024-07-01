@@ -1,0 +1,19 @@
+[workspace]
+members = ["examples/*"]
+
+[package]
+name = "protoviz"
+version = "0.1.0"
+edition = "2021"
+authors = ["Daniel Stuart <daniel.stuart14@gmail.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1.0.203", features = ["derive"] }
+tera = "1.20.0"
+thiserror = "1.0.61"
+
+[dev-dependencies]
+tokio = { version = "1.38.0", features = ["full"] }
+axum = "0.7.5"
