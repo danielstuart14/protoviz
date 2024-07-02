@@ -29,43 +29,56 @@ pub fn render(descriptor: &descriptor::ProtoDescriptor) -> Result<String, Error>
     let mut context = Context::new();
 
     context.insert("fields", &descriptor.fields);
-    context.insert("show_length", &descriptor.elements.show_length);
-    context.insert("show_position", &descriptor.elements.show_position);
+    context.insert("elements", &descriptor.elements);
+    context.insert("style", &descriptor.style);
 
     Tera::one_off(include_str!("../template.svg"), &context, false).map_err(|e| Error::TeraError(e))
 }
 
 #[cfg(test)]
 mod tests {
+    use hex_color::HexColor;
+
     use super::*;
 
     #[test]
     fn test_render() {
         let descriptor = descriptor::ProtoDescriptor {
             elements: descriptor::ElementsDescriptor {
-                show_position: true,
-                show_length: true,
+                position: true,
+                length: true,
+            },
+            style: descriptor::StyleDescriptor {
+                background_color: HexColor::rgb(255, 255, 255),
+                fill_color: HexColor::rgb(255, 255, 255),
+                text_color: HexColor::rgb(0, 0, 0),
+                subtitle_color: HexColor::rgb(0, 0, 0),
             },
             fields: vec![
                 descriptor::FieldDescriptor {
                     name: "field0".to_string(),
                     length: descriptor::FieldLength::Fixed(1),
+                    color: None,
                 },
                 descriptor::FieldDescriptor {
                     name: "field1".to_string(),
                     length: descriptor::FieldLength::Fixed(2),
+                    color: None,
                 },
                 descriptor::FieldDescriptor {
                     name: "field2".to_string(),
                     length: descriptor::FieldLength::Fixed(1),
+                    color: None,
                 },
                 descriptor::FieldDescriptor {
                     name: "field3".to_string(),
                     length: descriptor::FieldLength::Variable("N".to_string()),
+                    color: None,
                 },
                 descriptor::FieldDescriptor {
                     name: "field4".to_string(),
                     length: descriptor::FieldLength::Fixed(1),
+                    color: None,
                 },
             ],
         };
