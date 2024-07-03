@@ -26,7 +26,7 @@
 {% endfor -%}
 
 {# SVG start -#}
-<svg width="{{width}}" height="{{height_rect + (2*padding_y)}}" xmlns="http://www.w3.org/2000/svg" style="background-color:{{style.background_color}}">
+<svg viewBox="0 0 {{width}} {{height_rect + (2*padding_y)}}" xmlns="http://www.w3.org/2000/svg" style="background-color:{{style.background_color}}">
   {#- Background Rectangle #}
   <rect width="{{width - (2 * (padding_x - width_stroke))}}" height="{{height_rect + 2*(width_stroke)}}" x="{{padding_x - width_stroke}}" y="{{padding_y - width_stroke}}" fill="{{fill_color}}" />
 
