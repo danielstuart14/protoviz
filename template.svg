@@ -49,7 +49,7 @@
   {%- endif %}
 
   {#- Check if field has defined color #}
-  {%- if field.color is string -%}
+  {%- if field.color is defined -%}
   {%- set field_color = field.color %}
   {%- else -%}
   {%- set field_color = style.field_color %}
