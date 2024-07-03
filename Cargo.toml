@@ -16,7 +16,7 @@ keywords = ["protocol", "documentation", "svg", "binary"]
 [dependencies]
 hex_color = { version = "3.0.0", features = ["serde"] }
 serde = { version = "1.0.203", features = ["derive"] }
-tera = "1.20.0"
+tera = { version = "1.20.0", default-features = false }
 thiserror = "1.0.61"
 
 [dev-dependencies]
