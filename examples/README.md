@@ -11,8 +11,8 @@ You can run it with: ```cargo run --example api```
 - `style` (optional):
     - `background_color` (optional): Hex Color (RGB/RGBA) (Default: #ffffff)
         - Image background color
-    - `fill_color` (optional): Hex Color (RGB/RGBA) (Default: #ffffff)
-        - Field fill color
+    - `field_color` (optional): Hex Color (RGB/RGBA) (Default: #ffffff)
+        - Field background color
     - `text_color` (optional): Hex Color (RGB/RGBA) (Default: #000000)
         - Field text color (and stroke color)
     - `subtitle_color` (optional): Hex Color (RGB/RGBA) (Default: #000000)

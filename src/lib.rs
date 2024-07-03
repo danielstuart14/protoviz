@@ -50,7 +50,7 @@ mod tests {
             },
             style: descriptor::StyleDescriptor {
                 background_color: HexColor::rgb(255, 255, 255),
-                fill_color: HexColor::rgb(255, 255, 255),
+                field_color: HexColor::rgb(255, 255, 255),
                 text_color: HexColor::rgb(0, 0, 0),
                 subtitle_color: HexColor::rgb(0, 0, 0),
             },

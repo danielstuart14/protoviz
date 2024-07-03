@@ -14,6 +14,7 @@ pub enum FieldLength {
 pub struct FieldDescriptor {
     pub name: String,
     pub length: FieldLength,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<HexColor>, // Color of the field
 }
 
@@ -46,7 +47,7 @@ pub struct StyleDescriptor {
     #[serde(default = "default_white")]
     pub background_color: HexColor, // Background color of the image
     #[serde(default = "default_white")]
-    pub fill_color: HexColor, // Fill color of the image (field background)
+    pub field_color: HexColor, // Color of the field background
     #[serde(default = "default_black")]
     pub text_color: HexColor, // Text color of the image (field names + stroke)
     #[serde(default = "default_black")]
@@ -57,7 +58,7 @@ impl Default for StyleDescriptor {
     fn default() -> Self {
         Self {
             background_color: default_white(),
-            fill_color: default_white(),
+            field_color: default_white(),
             text_color: default_black(),
             subtitle_color: default_black(),
         }
