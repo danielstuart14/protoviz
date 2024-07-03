@@ -73,7 +73,7 @@ fn default_black() -> HexColor {
 }
 
 /// Struct to hold the options for a protocol
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct ProtoDescriptor {
     #[serde(default)]
     pub elements: ElementsDescriptor, // Options for the image elements
