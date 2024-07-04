@@ -18,6 +18,8 @@ You can run it with: ```cargo run --example api```
     - `subtitle_color` (optional): Hex Color (RGB/RGBA) (Default: #000000)
         - Subtitle text color
 - `elements` (optional):
+    - `is_network` (optional): Bool (Default: true)
+        - Whether the protocol uses network ordering (big-endian)
     - `position` (optional): Bool (Default: true)
         - Whether to show the position number at the start of each field
     - `length` (optional): Bool (Default: true)

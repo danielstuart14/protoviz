@@ -45,6 +45,7 @@ mod tests {
     fn test_render() {
         let descriptor = descriptor::ProtoDescriptor {
             elements: descriptor::ElementsDescriptor {
+                is_network: true,
                 position: true,
                 length: true,
             },

@@ -21,7 +21,8 @@ pub struct FieldDescriptor {
 /// Struct to hold the options for the image elements
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ElementsDescriptor {
-    //TODO: pub is_network: bool, // Whether it is a network protocol (big endian)
+    #[serde(default = "default_true")]
+    pub is_network: bool, // Whether it is a network protocol (big endian)
     #[serde(default = "default_true")]
     pub position: bool, // Whether to show the position of the fields
     #[serde(default = "default_true")]
@@ -31,6 +32,7 @@ pub struct ElementsDescriptor {
 impl Default for ElementsDescriptor {
     fn default() -> Self {
         Self {
+            is_network: true,
             position: true,
             length: true,
         }

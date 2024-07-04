@@ -24,6 +24,12 @@
 {% endif -%}
 {% endfor -%}
 
+{% if elements.is_network -%}
+{% set next_rect = padding_x -%}
+{% else -%}
+{% set next_rect = width - padding_x -%}
+{% endif -%}
+
 {# SVG start -#}
 <svg viewBox="0 0 {{width}} {{height_rect + (2*padding_y)}}" xmlns="http://www.w3.org/2000/svg" style="background-color:{{style.background_color}}">
   {#- Background Rectangle #}
@@ -39,6 +45,12 @@
     {% set field_length = length_variable %}
   {%- endif %}
   {%- set cur_width = field_length * width_rect %}
+
+  {#- Update next rectangle position if little endian #}
+  {%- if not elements.is_network %}
+  {%- set_global next_rect = next_rect - cur_width %}
+  {%- endif %}
+
   {%- set middle_pos = next_rect + (cur_width / 2) %}
   {%- if field.length is number -%}
     {% set text_pos = middle_pos %}
@@ -101,10 +113,16 @@
 
   {#- Check if field position is enabled #}
   {%- if elements.position %}
+  {#- Set text position at last divider #}
+  {%- if elements.is_network %}
+  {%- set field_pos_x = next_rect + (width_rect / 2) %}
+  {%- else %}
+  {%- set field_pos_x = next_rect + cur_width - (width_rect / 2) %}
+  {%- endif %}
 
   {#- Add position to the start of all fixed size fields #}
   {%- if field.length is number %}
-  <text x="{{next_rect + (width_rect / 2)}}" y="{{padding_y - padding_sub}}" fill="{{subtitle_color}}" dominant-baseline="middle" text-anchor="middle">
+  <text x="{{field_pos_x}}" y="{{padding_y - padding_sub}}" fill="{{subtitle_color}}" dominant-baseline="middle" text-anchor="middle">
   {{-field_pos - field.length}}
   {%- for var_length in var_lengths -%}
   {{"+" ~ var_length-}}
@@ -113,7 +131,9 @@
   {%- endif %}
   {%- endif %}
 
-  {#- Update next rectangle position #}
+  {#- Update next rectangle position if big endian #}
+  {%- if elements.is_network %}
   {%- set_global next_rect = next_rect + cur_width %}
+  {%- endif %}
 {% endfor -%}
 </svg>

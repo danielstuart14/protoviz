@@ -19,10 +19,13 @@ async fn handler(
 ) -> Result<Html<String>, StatusCode> {
     let result = match protoviz::render(&descriptor) {
         Ok(result) => result,
-        Err(e) => return Err(match e {
-            protoviz::errors::Error::FormatError(_) => StatusCode::BAD_REQUEST,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        }),
+        Err(e) => {
+            println!("Error: {:?}", e);
+            return Err(match e {
+                protoviz::errors::Error::FormatError(_) => StatusCode::BAD_REQUEST,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            })
+        },
     };
 
     Ok(Html(result))
