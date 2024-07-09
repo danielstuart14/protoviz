@@ -1,12 +1,10 @@
 pub mod descriptor;
 pub mod errors;
+mod template;
 
 use errors::Error;
+use template::generate_data;
 use tera::{Context, Tera};
-
-// TODO: Add support for little endian
-// TODO: Add support for larger variable length tags (subtitle text wrapping)
-// TODO: Add support for larger field names (field name text wrapping)
 
 /// Render the SVG image of the protocol
 pub fn render(descriptor: &descriptor::ProtoDescriptor) -> Result<String, Error> {
@@ -26,11 +24,11 @@ pub fn render(descriptor: &descriptor::ProtoDescriptor) -> Result<String, Error>
         }
     }
 
+    let data = generate_data(descriptor);
+
     let mut context = Context::new();
 
-    context.insert("fields", &descriptor.fields);
-    context.insert("elements", &descriptor.elements);
-    context.insert("style", &descriptor.style);
+    context.insert("data", &data);
 
     Tera::one_off(include_str!("../template.svg"), &context, false).map_err(|e| Error::TeraError(e))
 }

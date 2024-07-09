@@ -2,11 +2,20 @@ use hex_color::HexColor;
 use serde::{Deserialize, Serialize};
 
 /// Enum to hold the length of a field
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 #[serde(untagged)]
 pub enum FieldLength {
     Fixed(usize),
     Variable(String),
+}
+
+impl ToString for FieldLength {
+    fn to_string(&self) -> String {
+        match self {
+            FieldLength::Fixed(length) => length.to_string(),
+            FieldLength::Variable(name) => name.clone(),
+        }
+    }
 }
 
 /// Struct to hold the options for a field

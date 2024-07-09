@@ -1,139 +1,48 @@
-{% set padding_x = 50 -%}
-{% set padding_y = 50 -%}
-{% set padding_sub = 15 -%}
-{% set div_height = 20 -%}
-{% set next_rect = padding_x -%}
-{% set width_rect = 50 -%}
-{% set height_rect = 100 -%}
-{% set width_var_sep = 10 -%}
-{% set delta_var_sep = 20 -%}
-{% set length_variable = 3 -%}
-{% set width_stroke = 2 -%}
-
-{% set text_color = style.text_color -%}
-{% set subtitle_color = style.subtitle_color -%}
-
-{% set field_pos = 0 -%}
-{% set var_lengths = [] -%}
-{% set width = 2 * padding_x -%}
-{% for field in fields -%}
-{% if field.length is number -%}
-{% set_global width = width + (field.length * width_rect) -%}
-{% else -%}
-{% set_global width = width + (length_variable * width_rect) -%}
-{% endif -%}
-{% endfor -%}
-
-{% if elements.is_network -%}
-{% set next_rect = padding_x -%}
-{% else -%}
-{% set next_rect = width - padding_x -%}
-{% endif -%}
-
 {# SVG start -#}
-<svg viewBox="0 0 {{width}} {{height_rect + (2*padding_y)}}" xmlns="http://www.w3.org/2000/svg" style="background-color:{{style.background_color}}">
-  {#- Background Rectangle #}
-  <rect width="{{width - (2 * (padding_x - width_stroke))}}" height="{{height_rect + 2*(width_stroke)}}" x="{{padding_x - width_stroke}}" y="{{padding_y - width_stroke}}" fill="{{style.background_color}}" />
+<svg viewBox="0 0 {{data.size.x}} {{data.size.y}}" xmlns="http://www.w3.org/2000/svg" style="background-color:{{data.background}}">
+{#- Iterate over all available static fields -#}
+{%- for field in data.static_fields %}
+  {%- set coord_x = field.coordinates.x %}
+  {%- set coord_y = field.coordinates.y %}
+  {%- set size_x = field.size.x %}
+  {%- set size_y = field.size.y %}
+  <polygon points="{{coord_x}},{{coord_y}} {{coord_x}},{{coord_y + size_y}} {{coord_x + size_x}},{{coord_y + size_y}} {{coord_x + size_x}},{{coord_y}}" fill="{{field.background}}" style="stroke:{{field.stroke_color}};stroke-width:{{field.stroke_width}}" />
+{%- endfor %}
 
-{#- Iterate over all available fields #}
-{%- for field in fields -%}
-
-  {#- Check if field length is variable or fixed and process it #}
-  {%- if field.length is number -%}
-    {% set field_length = field.length %}
-  {%- else -%}
-    {% set field_length = length_variable %}
-  {%- endif %}
-  {%- set cur_width = field_length * width_rect %}
-
-  {#- Update next rectangle position if little endian #}
-  {%- if not elements.is_network %}
-  {%- set_global next_rect = next_rect - cur_width %}
-  {%- endif %}
-
-  {%- set middle_pos = next_rect + (cur_width / 2) %}
-  {%- if field.length is number -%}
-    {% set text_pos = middle_pos %}
-    {%- set_global field_pos = field_pos + field.length %}
-  {%- else -%}
-    {% set text_pos = next_rect + (cur_width / length_variable) %}
-    {%- set_global var_lengths = var_lengths | concat(with=field.length) %}
-  {%- endif %}
-
-  {#- Check if field has defined color #}
-  {%- if field.color is defined -%}
-  {%- set field_color = field.color %}
-  {%- else -%}
-  {%- set field_color = style.field_color %}
-  {%- endif %}
-
-  {#- Field Background Rectangle #}
-  <!-- Field {{field.name}} -->
-  <rect width="{{cur_width}}" height="{{height_rect}}" x="{{next_rect}}" y="{{padding_y}}" stroke="{{text_color}}" stroke-width="{{width_stroke}}" fill="{{field_color}}" />
+{#- Iterate over all available dynamic fields -#}
+{%- for field in data.dynamic_fields %}
+  {%- set coord_x = field.coordinates.x %}
+  {%- set coord_y = field.coordinates.y %}
+  {%- set size_x1 = field.size.x1 %}
+  {%- set size_x2 = field.size.x2 %}
+  {%- set size_y = field.size.y %}
+  {%- set spacing = field.size.spacing %}
+  {%- set delta = field.size.delta %}
   
-  {#- Iterate over field length and add dividers #}
-  {%- for i in range(end=field_length) %}
-    {%- if not loop.first and field.length is number %}
-  <line x1="{{next_rect + (i * width_rect)}}" y1="{{padding_y}}" x2="{{next_rect + (i * width_rect)}}" y2="{{padding_y + div_height}}" style="stroke:{{text_color}};stroke-width:{{width_stroke}}" />
-  <line x1="{{next_rect + (i * width_rect)}}" y1="{{padding_y + height_rect}}" x2="{{next_rect + (i * width_rect)}}" y2="{{padding_y + height_rect - div_height}}" style="stroke:{{text_color}};stroke-width:{{width_stroke}}" />
-    {%- endif -%}
-  {% endfor %}
+  {#- First polygon (left) #}
+  <polygon points="{{coord_x}},{{coord_y}} {{coord_x}},{{coord_y + size_y}} {{coord_x + size_x1 - delta}},{{coord_y + size_y}} {{coord_x + size_x1 + delta}},{{coord_y}}" fill="{{field.background}}" style="stroke:{{field.stroke_color}};stroke-width:{{field.stroke_width}}" />
+  
+  {#- Second polygon (right) #}
+  {%- set coord_x = coord_x + size_x1 + spacing %}
+  <polygon points="{{coord_x + delta}},{{coord_y}} {{coord_x - delta}},{{coord_y + size_y}} {{coord_x + size_x2}},{{coord_y + size_y}} {{coord_x + size_x2}},{{coord_y}}" fill="{{field.background}}" style="stroke:{{field.stroke_color}};stroke-width:{{field.stroke_width}}" />
+{%- endfor %}
 
-  {#- Check if length is variable #}
-  {%- if field.length is not number %}
-    {%- set top1_x = (next_rect + cur_width - width_rect) + delta_var_sep + width_var_sep %}
-    {%- set top2_x = (next_rect + cur_width - width_rect) + delta_var_sep %}
-    {%- set bottom1_x = (next_rect + cur_width - width_rect) - delta_var_sep %}
-    {%- set bottom2_x = (next_rect + cur_width - width_rect) - delta_var_sep - width_var_sep %}
-    {%- set top_y = padding_y %}
-    {%- set bottom_y = padding_y + height_rect %}
+{#- Iterate over all available field ticks -#}
+{%- for field in data.field_ticks %}
+  <line x1="{{field.coordinates.x}}" y1="{{field.coordinates.y}}" x2="{{field.coordinates.x}}" y2="{{field.coordinates.y + field.size.y}}" style="stroke:{{field.color}};stroke-width:{{field.size.x}}" />
+{%- endfor %}
 
-  {#- Add tilted bar #}
-  <polygon points="{{top1_x}},{{top_y - width_stroke}} {{bottom1_x}},{{bottom_y + width_stroke}} {{bottom2_x}},{{bottom_y + width_stroke}} {{top2_x}},{{top_y - width_stroke}}" style="fill:{{style.background_color}};" />
-  <polyline points="{{top1_x + 5}},{{top_y}} {{top1_x}},{{top_y}} {{bottom1_x}},{{bottom_y}} {{bottom1_x + 5}},{{bottom_y}}" fill="none" style="stroke:{{text_color}};stroke-width:{{width_stroke}}" />
-  <polyline points="{{bottom2_x - 5}},{{bottom_y}} {{bottom2_x}},{{bottom_y}} {{top2_x}},{{top_y}} {{top2_x - 5}},{{top_y}}" fill="none" style="stroke:{{text_color}};stroke-width:{{width_stroke}}" />
-  {%- endif %}
+{#- Iterate over all available field texts -#}
+{%- for field in data.field_texts %}
+  <text x="{{field.coordinates.x}}" y="{{field.coordinates.y}}" fill="{{field.color}}" dominant-baseline="{{field.baseline}}" text-anchor="middle">{{field.text}}</text>
+{%- endfor %}
 
-  {#- Add field name #}
-  <text x="{{text_pos}}" y="{{padding_y + (height_rect / 2)}}" fill="{{text_color}}" dominant-baseline="middle" text-anchor="middle">{{field.name}}</text>
-
-  {#- Check if field length is enabled #}
-  {%- if elements.length %}
-
-  {#- Add first length separator #}
+{#- Iterate over all available field lengths -#}
+{%- for field in data.field_lengths %}
+  <line x1="{{field.coordinates.x}}" y1="{{field.coordinates.y}}" x2="{{field.coordinates.x + field.size.x}}" y2="{{field.coordinates.y}}" style="stroke:{{field.color}};stroke-width:{{field.stroke}}" />
   {%- if loop.first %}
-  <line x1="{{padding_x}}" y1="{{padding_y + height_rect + (2 * padding_sub / 3)}}" x2="{{padding_x}}" y2="{{padding_y + height_rect + (4 * padding_sub / 3)}}" style="stroke:{{subtitle_color}};stroke-width:{{width_stroke}}" />
+  <line x1="{{field.coordinates.x}}" y1="{{field.coordinates.y - field.size.y / 2}}" x2="{{field.coordinates.x}}" y2="{{field.coordinates.y + field.size.y / 2}}" style="stroke:{{field.color}};stroke-width:{{field.stroke}}" />
   {%- endif %}
-
-  {#- Add line, end separator and length text #}
-  <line x1="{{next_rect + cur_width}}" y1="{{padding_y + height_rect + (2 * padding_sub / 3)}}" x2="{{next_rect + cur_width}}" y2="{{padding_y + height_rect + (4 * padding_sub / 3)}}" style="stroke:{{subtitle_color}};stroke-width:{{width_stroke}}" />
-  <line x1="{{next_rect}}" y1="{{padding_y + height_rect + padding_sub}}" x2="{{next_rect + cur_width}}" y2="{{padding_y + height_rect + padding_sub}}" style="stroke:{{subtitle_color}};stroke-width:{{width_stroke}}" />
-  <text x="{{next_rect + (cur_width / 2)}}" y="{{padding_y + height_rect + (4 * padding_sub / 3)}}" fill="{{subtitle_color}}" dominant-baseline="hanging" text-anchor="middle">{{field.length}}</text>
-  {%- endif %}
-
-  {#- Check if field position is enabled #}
-  {%- if elements.position %}
-  {#- Set text position at last divider #}
-  {%- if elements.is_network %}
-  {%- set field_pos_x = next_rect + (width_rect / 2) %}
-  {%- else %}
-  {%- set field_pos_x = next_rect + cur_width - (width_rect / 2) %}
-  {%- endif %}
-
-  {#- Add position to the start of all fixed size fields #}
-  {%- if field.length is number %}
-  <text x="{{field_pos_x}}" y="{{padding_y - padding_sub}}" fill="{{subtitle_color}}" dominant-baseline="middle" text-anchor="middle">
-  {{-field_pos - field.length}}
-  {%- for var_length in var_lengths -%}
-  {{"+" ~ var_length-}}
-  {% endfor -%}
-  </text>
-  {%- endif %}
-  {%- endif %}
-
-  {#- Update next rectangle position if big endian #}
-  {%- if elements.is_network %}
-  {%- set_global next_rect = next_rect + cur_width %}
-  {%- endif %}
-{% endfor -%}
+  <line x1="{{field.coordinates.x + field.size.x}}" y1="{{field.coordinates.y - field.size.y / 2}}" x2="{{field.coordinates.x + field.size.x}}" y2="{{field.coordinates.y + field.size.y / 2}}" style="stroke:{{field.color}};stroke-width:{{field.stroke}}" />
+{%- endfor %}
 </svg>
