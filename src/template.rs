@@ -88,7 +88,7 @@ const DEFAULT_SIZE_Y: f64 = 100.0;
 const DEFAULT_DYN_LENGTH_1: f64 = 95.0;
 const DEFAULT_DYN_LENGTH_2: f64 = 45.0;
 const DEFAULT_DYN_SPACING: f64 = 10.0;
-const DEFAULT_DYN_DELTA: f64 = 20.0;
+const DEFAULT_DYN_DELTA: f64 = 25.0;
 const DEFAULT_TICK_SIZE: f64 = 20.0;
 const DEFAULT_SUB_PADDING: f64 = 10.0;
 const DEFAULT_LENGTH_SIZE: f64 = 10.0;
@@ -258,7 +258,7 @@ fn create_position_sub(var_length: &mut HashMap<String, usize>, fixed_length: us
 
     for (length, count) in var_length {
         if !result.is_empty() {
-            result.push_str(" + ");
+            result.push('+');
         }
 
         if *count == 1 {
