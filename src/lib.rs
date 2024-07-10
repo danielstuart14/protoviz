@@ -43,9 +43,11 @@ mod tests {
     fn test_render() {
         let descriptor = descriptor::ProtoDescriptor {
             elements: descriptor::ElementsDescriptor {
-                is_network: true,
-                position: true,
-                length: true,
+                network_order: true,
+                field_position: true,
+                field_length: true,
+                wrap_line: true,
+                start_symbol: true,
             },
             style: descriptor::StyleDescriptor {
                 background_color: HexColor::rgb(255, 255, 255),
@@ -57,26 +59,31 @@ mod tests {
                 descriptor::FieldDescriptor {
                     name: "field0".to_string(),
                     length: descriptor::FieldLength::Fixed(1),
+                    wrap: false,
                     color: None,
                 },
                 descriptor::FieldDescriptor {
                     name: "field1".to_string(),
                     length: descriptor::FieldLength::Fixed(2),
+                    wrap: false,
                     color: None,
                 },
                 descriptor::FieldDescriptor {
                     name: "field2".to_string(),
                     length: descriptor::FieldLength::Fixed(1),
+                    wrap: false,
                     color: None,
                 },
                 descriptor::FieldDescriptor {
                     name: "field3".to_string(),
                     length: descriptor::FieldLength::Variable("N".to_string()),
+                    wrap: false,
                     color: None,
                 },
                 descriptor::FieldDescriptor {
                     name: "field4".to_string(),
                     length: descriptor::FieldLength::Fixed(1),
+                    wrap: false,
                     color: None,
                 },
             ],

@@ -23,6 +23,8 @@ impl ToString for FieldLength {
 pub struct FieldDescriptor {
     pub name: String,
     pub length: FieldLength,
+    #[serde(default)]
+    pub wrap: bool, // Whether to wrap at the end of the field
     #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<HexColor>, // Color of the field
 }
@@ -30,20 +32,26 @@ pub struct FieldDescriptor {
 /// Struct to hold the options for the image elements
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ElementsDescriptor {
+    #[serde(default = "default_true", alias = "is_network")]
+    pub network_order: bool, // Whether it is a network protocol (big endian)
+    #[serde(default = "default_true", alias = "position")]
+    pub field_position: bool, // Whether to show the position of the fields
+    #[serde(default = "default_true", alias = "length")]
+    pub field_length: bool, // Whether to show the length of the fields
     #[serde(default = "default_true")]
-    pub is_network: bool, // Whether it is a network protocol (big endian)
+    pub wrap_line: bool, // Whether to show the wrap line
     #[serde(default = "default_true")]
-    pub position: bool, // Whether to show the position of the fields
-    #[serde(default = "default_true")]
-    pub length: bool, // Whether to show the length of the fields
+    pub start_symbol: bool, // Whether to show the wrap line
 }
 
 impl Default for ElementsDescriptor {
     fn default() -> Self {
         Self {
-            is_network: true,
-            position: true,
-            length: true,
+            network_order: true,
+            field_position: true,
+            field_length: true,
+            wrap_line: true,
+            start_symbol: true,
         }
     }
 }

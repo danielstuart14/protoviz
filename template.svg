@@ -34,15 +34,28 @@
 
 {#- Iterate over all available field texts -#}
 {%- for field in data.field_texts %}
-  <text x="{{field.coordinates.x}}" y="{{field.coordinates.y}}" fill="{{field.color}}" dominant-baseline="{{field.baseline}}" text-anchor="middle">{{field.text}}</text>
+  <text x="{{field.coordinates.x}}" y="{{field.coordinates.y}}" fill="{{field.color}}" dominant-baseline="{{field.baseline}}" text-anchor="middle" font-size="{{field.height}}">{{field.text}}</text>
 {%- endfor %}
 
 {#- Iterate over all available field lengths -#}
+{%- set cur_y = 0.0 %}
 {%- for field in data.field_lengths %}
   <line x1="{{field.coordinates.x}}" y1="{{field.coordinates.y}}" x2="{{field.coordinates.x + field.size.x}}" y2="{{field.coordinates.y}}" style="stroke:{{field.color}};stroke-width:{{field.stroke}}" />
-  {%- if loop.first %}
+  {%- if cur_y != field.coordinates.y %}
+  {%- set cur_y = field.coordinates.y %}
   <line x1="{{field.coordinates.x}}" y1="{{field.coordinates.y - field.size.y / 2}}" x2="{{field.coordinates.x}}" y2="{{field.coordinates.y + field.size.y / 2}}" style="stroke:{{field.color}};stroke-width:{{field.stroke}}" />
   {%- endif %}
   <line x1="{{field.coordinates.x + field.size.x}}" y1="{{field.coordinates.y - field.size.y / 2}}" x2="{{field.coordinates.x + field.size.x}}" y2="{{field.coordinates.y + field.size.y / 2}}" style="stroke:{{field.color}};stroke-width:{{field.stroke}}" />
 {%- endfor %}
+
+{#- Iterate over all available wrap lines -#}
+{%- for wrap in data.wrap_lines %}
+  <polyline points="{{wrap.start.x}},{{wrap.start.y}} {{wrap.start.x + wrap.padding}},{{wrap.start.y}} {{wrap.start.x + wrap.padding}},{{wrap.start.y + wrap.center_delta}} {{wrap.end.x - wrap.padding}},{{wrap.start.y + wrap.center_delta}} {{wrap.end.x - wrap.padding}},{{wrap.end.y}} {{wrap.end.x}},{{wrap.end.y}}" fill="none" style="stroke:{{wrap.color}};stroke-width:{{wrap.stroke}}" />
+{%- endfor %}
+
+{#- Add start symbol if set -#}
+{%- if data.start_symbol is defined %}
+{%- set symbol = data.start_symbol %}
+  <polygon points="{{symbol.coordinates.x}},{{symbol.coordinates.y}} {{symbol.coordinates.x + symbol.size.x}},{{symbol.coordinates.y + symbol.size.y/2}} {{symbol.coordinates.x + symbol.size.x}},{{symbol.coordinates.y - symbol.size.y/2}}" fill="{{symbol.color}}" />
+{%- endif %}
 </svg>
