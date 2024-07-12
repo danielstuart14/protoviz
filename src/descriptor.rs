@@ -35,6 +35,9 @@ pub struct ElementsDescriptor {
     #[serde(default = "default_true", alias = "is_network")]
     /// Whether it is a network protocol (big endian)
     pub network_order: bool,
+    #[serde(default = "default_true")]
+    /// Whether subtitles should be shown between lines
+    pub inner_subtitles: bool,
     #[serde(default = "default_true", alias = "position")]
     /// Whether to show the position of the fields
     pub field_position: bool,
@@ -53,6 +56,7 @@ impl Default for ElementsDescriptor {
     fn default() -> Self {
         Self {
             network_order: true,
+            inner_subtitles: true,
             field_position: true,
             field_length: true,
             wrap_line: true,
@@ -83,6 +87,9 @@ pub struct StyleDescriptor {
     #[serde(default = "default_50")]
     /// Width of a field unit in the image
     pub unit_width: usize,
+    #[serde(default = "default_3")]
+    /// Units of a dynamic field
+    pub dyn_units: usize,
 }
 
 impl Default for StyleDescriptor {
@@ -93,6 +100,7 @@ impl Default for StyleDescriptor {
             text_color: default_black(),
             subtitle_color: default_black(),
             unit_width: default_50(),
+            dyn_units: default_3(),
         }
     }
 }
@@ -107,6 +115,10 @@ fn default_black() -> HexColor {
 
 fn default_50() -> usize {
     50
+}
+
+fn default_3() -> usize {
+    3
 }
 
 /// Struct to hold the options for a protocol

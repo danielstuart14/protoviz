@@ -14,6 +14,18 @@ use tera::{Context, Tera};
 
 /// Render the SVG image of the protocol
 pub fn render(descriptor: &descriptor::ProtoDescriptor) -> Result<String, Error> {
+    if descriptor.style.unit_width < 10 {
+        return Err(Error::FormatError(
+            "Unit width cannot be less than 10".to_string(),
+        ));
+    }
+
+    if descriptor.style.dyn_units < 3 {
+        return Err(Error::FormatError(
+            "Dynamic units cannot be less than 3".to_string(),
+        ));
+    }
+
     if descriptor.fields.is_empty() {
         return Err(Error::FormatError("No fields provided".to_string()));
     }
@@ -54,6 +66,7 @@ mod tests {
         let descriptor = descriptor::ProtoDescriptor {
             elements: descriptor::ElementsDescriptor {
                 network_order: true,
+                inner_subtitles: true,
                 field_position: true,
                 field_length: true,
                 wrap_line: true,
@@ -65,6 +78,7 @@ mod tests {
                 text_color: HexColor::rgb(0, 0, 0),
                 subtitle_color: HexColor::rgb(0, 0, 0),
                 unit_width: 50,
+                dyn_units: 3,
             },
             fields: vec![
                 descriptor::FieldDescriptor {

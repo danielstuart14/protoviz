@@ -3,7 +3,7 @@ members = ["examples/*"]
 
 [package]
 name = "protoviz"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 authors = ["Daniel Stuart <daniel.stuart14@gmail.com>"]
 license = "MIT"
