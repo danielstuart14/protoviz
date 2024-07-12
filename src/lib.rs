@@ -1,3 +1,9 @@
+//! # ProtoViz
+//!
+//! A fast and intuitive way of creating figures for protocol documentation.
+//!
+//! For an example of how to use this library, check the examples folder or the [ProtoViz Website](https://protoviz.stu.art.br).
+
 pub mod descriptor;
 pub mod errors;
 mod template;
@@ -14,12 +20,16 @@ pub fn render(descriptor: &descriptor::ProtoDescriptor) -> Result<String, Error>
 
     for field in &descriptor.fields {
         if let descriptor::FieldLength::Fixed(0) = field.length {
-            return Err(Error::FormatError("Field length cannot be zero".to_string()));
+            return Err(Error::FormatError(
+                "Field length cannot be zero".to_string(),
+            ));
         }
 
         if let descriptor::FieldLength::Variable(name) = &field.length {
             if name.is_empty() {
-                return Err(Error::FormatError("Field length cannot be empty".to_string()));
+                return Err(Error::FormatError(
+                    "Field length cannot be empty".to_string(),
+                ));
             }
         }
     }
@@ -54,6 +64,7 @@ mod tests {
                 field_color: HexColor::rgb(255, 255, 255),
                 text_color: HexColor::rgb(0, 0, 0),
                 subtitle_color: HexColor::rgb(0, 0, 0),
+                unit_width: 50,
             },
             fields: vec![
                 descriptor::FieldDescriptor {

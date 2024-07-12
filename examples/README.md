@@ -17,12 +17,14 @@ You can run it with: ```cargo run --example api```
         - Field text color (and stroke color)
     - `subtitle_color` (optional): Hex Color (RGB/RGBA) (Default: #000000)
         - Subtitle text color
+    - `unit_width` (optional): Integer (Default: 50)
+        - Width of a field unit (usually a byte or bit)
 - `elements` (optional):
-    - `is_network` (optional): Bool (Default: true)
+    - `network_order` (optional): Bool (Default: true)
         - Whether the protocol uses network ordering (big-endian)
-    - `position` (optional): Bool (Default: true)
+    - `field_position` (optional): Bool (Default: true)
         - Whether to show the position number at the start of each field
-    - `length` (optional): Bool (Default: true)
+    - `field_length` (optional): Bool (Default: true)
         - Whether to show the length of each field
 - `fields` (array of field objects):
     - `name`: String

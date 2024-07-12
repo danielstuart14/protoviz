@@ -1,10 +1,16 @@
 # ProtoViz
 ![Example](./images/example.svg)
 
-This library is an attempt to create a fast and intuitive way of making figures for protocol documentation.
+A fast and intuitive way of creating figures for protocol documentation.
 
-Currently it supports protocols with fixed and variable field sizes, with the option of showing field lengths and positions. It also supports styling, with global and individual coloring.
+Supports many features:
+- Fixed and variable size fields
+- Big and Little Endianness
+- Many styling options (Background color, field color, text color)
+- Line wrapping
+- Field length and position subtitles
+- Custom field width
 
 It uses [Tera](https://keats.github.io/tera/docs) for generating the SVG file.
 
-For a pratical use case, check the [examples readme](./examples/README.md).
+For a pratical use case, check the [examples readme](./examples/README.md) or the [ProtoViz Website](https://protoviz.stu.art.br).

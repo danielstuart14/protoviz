@@ -1,4 +1,9 @@
-use axum::{http::StatusCode, response::{Html, Result}, routing::post, Json, Router};
+use axum::{
+    http::StatusCode,
+    response::{Html, Result},
+    routing::post,
+    Json, Router,
+};
 use protoviz::descriptor::ProtoDescriptor;
 
 #[tokio::main]
@@ -14,9 +19,7 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handler(
-    Json(descriptor): Json<ProtoDescriptor>,
-) -> Result<Html<String>, StatusCode> {
+async fn handler(Json(descriptor): Json<ProtoDescriptor>) -> Result<Html<String>, StatusCode> {
     let result = match protoviz::render(&descriptor) {
         Ok(result) => result,
         Err(e) => {
@@ -24,8 +27,8 @@ async fn handler(
             return Err(match e {
                 protoviz::errors::Error::FormatError(_) => StatusCode::BAD_REQUEST,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
-            })
-        },
+            });
+        }
     };
 
     Ok(Html(result))

@@ -104,12 +104,7 @@ pub struct TemplateData {
 
 const DEFAULT_PADDING: f64 = 50.0;
 const DEFAULT_STROKE_WIDTH: f64 = 2.0;
-const DEFAULT_SIZE_X: f64 = 50.0;
-const DEFAULT_SIZE_Y: f64 = 100.0;
-const DEFAULT_DYN_LENGTH_1: f64 = 95.0;
-const DEFAULT_DYN_LENGTH_2: f64 = 45.0;
-const DEFAULT_DYN_SPACING: f64 = 10.0;
-const DEFAULT_DYN_DELTA: f64 = 25.0;
+const DEFAULT_SIZE_Y: f64 = 80.0;
 const DEFAULT_TICK_SIZE: f64 = 20.0;
 const DEFAULT_SUB_PADDING: f64 = 10.0;
 const DEFAULT_LENGTH_SIZE: f64 = 10.0;
@@ -117,6 +112,13 @@ const DEFAULT_TEXT_SIZE: f64 = 16.0;
 const DEFAULT_START_SYMBOL_X: f64 = 10.0;
 const DEFAULT_START_SYMBOL_Y: f64 = 20.0;
 
+// PERCENTAGE FROM UNIT_WIDTH
+const DEFAULT_DYN_LENGTH_1: f64 = 1.9;
+const DEFAULT_DYN_LENGTH_2: f64 = 0.9;
+const DEFAULT_DYN_SPACING: f64 = 0.2;
+const DEFAULT_DYN_DELTA: f64 = 0.5;
+
+/// Generate the data consumed by the SVG template
 pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
     let mut static_fields = Vec::new();
     let mut dynamic_fields = Vec::new();
@@ -135,11 +137,14 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
     let mut max_x = 0.0;
 
     // Reverse the fields if the elements are not in network order (big-endian)
-    let fields: Box<dyn Iterator<Item=_>> = if descriptor.elements.network_order {
+    let fields: Box<dyn Iterator<Item = _>> = if descriptor.elements.network_order {
         Box::new(descriptor.fields.iter())
     } else {
         Box::new(descriptor.fields.iter().rev())
     };
+
+    // Default width of a field unit
+    let default_width = descriptor.style.unit_width as f64;
 
     for (i, field) in fields.into_iter().enumerate() {
         // Wrap line before field if not in network order and wrap is enabled
@@ -155,14 +160,25 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
             descriptor::FieldLength::Fixed(length) => {
                 // Add field ticks
                 for i in 1..*length {
-                    field_ticks.extend([0.0, DEFAULT_SIZE_Y - DEFAULT_TICK_SIZE].into_iter().map(|y_delta| FieldTicks {
-                        coordinates: Components { x: x + i as f64 * DEFAULT_SIZE_X, y: y + y_delta },
-                        size: Components { x: DEFAULT_STROKE_WIDTH, y: DEFAULT_TICK_SIZE },
-                        color: descriptor.style.text_color,
-                    }));
+                    field_ticks.extend([0.0, DEFAULT_SIZE_Y - DEFAULT_TICK_SIZE].into_iter().map(
+                        |y_delta| FieldTicks {
+                            coordinates: Components {
+                                x: x + i as f64 * default_width,
+                                y: y + y_delta,
+                            },
+                            size: Components {
+                                x: DEFAULT_STROKE_WIDTH,
+                                y: DEFAULT_TICK_SIZE,
+                            },
+                            color: descriptor.style.text_color,
+                        },
+                    ));
                 }
 
-                let size = Components { x: *length as f64 * DEFAULT_SIZE_X, y: DEFAULT_SIZE_Y };
+                let size = Components {
+                    x: *length as f64 * default_width,
+                    y: DEFAULT_SIZE_Y,
+                };
 
                 static_fields.push(StaticFields {
                     background: field.color.unwrap_or(descriptor.style.field_color),
@@ -174,20 +190,23 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
 
                 field_texts.push(FieldText {
                     text: field.name.clone(),
-                    coordinates: Components { x: x + size.x / 2.0, y: y + DEFAULT_SIZE_Y / 2.0 },
+                    coordinates: Components {
+                        x: x + size.x / 2.0,
+                        y: y + DEFAULT_SIZE_Y / 2.0,
+                    },
                     color: descriptor.style.text_color,
                     baseline: TextBaseline::Middle,
                     height: DEFAULT_TEXT_SIZE,
                 });
 
                 size.x
-            },
+            }
             descriptor::FieldLength::Variable(_length) => {
                 let size = ComponentsDynamic {
-                    x1: DEFAULT_DYN_LENGTH_1,
-                    x2: DEFAULT_DYN_LENGTH_2,
-                    spacing: DEFAULT_DYN_SPACING,
-                    delta: DEFAULT_DYN_DELTA,
+                    x1: DEFAULT_DYN_LENGTH_1 * default_width,
+                    x2: DEFAULT_DYN_LENGTH_2 * default_width,
+                    spacing: DEFAULT_DYN_SPACING * default_width,
+                    delta: DEFAULT_DYN_DELTA * default_width,
                     y: DEFAULT_SIZE_Y,
                 };
 
@@ -201,12 +220,14 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
 
                 field_texts.push(FieldText {
                     text: field.name.clone(),
-                    coordinates: Components { x: x + size.x1 / 2.0, y: y + DEFAULT_SIZE_Y / 2.0 },
+                    coordinates: Components {
+                        x: x + size.x1 / 2.0,
+                        y: y + DEFAULT_SIZE_Y / 2.0,
+                    },
                     color: descriptor.style.text_color,
                     baseline: TextBaseline::Middle,
                     height: DEFAULT_TEXT_SIZE,
                 });
-
 
                 size.x1 + size.spacing + size.x2
             }
@@ -214,24 +235,39 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
 
         // Add length and position subtitle coordinates to the positions vector
         let pos_x = if descriptor.elements.network_order {
-            x + DEFAULT_SIZE_X / 2.0
+            x + default_width / 2.0
         } else {
-            x + length - DEFAULT_SIZE_X / 2.0
+            x + length - default_width / 2.0
         };
-        positions.push((field.length.clone(), Components { x: pos_x, y: y - DEFAULT_SUB_PADDING }));
+        positions.push((
+            field.length.clone(),
+            Components {
+                x: pos_x,
+                y: y - DEFAULT_SUB_PADDING,
+            },
+        ));
 
         // If field length subtitles are enabled, add them
         if descriptor.elements.field_length {
             field_lengths.push(FieldLength {
-                coordinates: Components { x: x, y: y + DEFAULT_SIZE_Y + DEFAULT_SUB_PADDING + DEFAULT_LENGTH_SIZE / 2.0 },
-                size: Components { x: length, y: DEFAULT_LENGTH_SIZE },
+                coordinates: Components {
+                    x: x,
+                    y: y + DEFAULT_SIZE_Y + DEFAULT_SUB_PADDING + DEFAULT_LENGTH_SIZE / 2.0,
+                },
+                size: Components {
+                    x: length,
+                    y: DEFAULT_LENGTH_SIZE,
+                },
                 stroke: DEFAULT_STROKE_WIDTH,
                 color: descriptor.style.subtitle_color,
             });
 
             field_texts.push(FieldText {
                 text: field.length.to_string(),
-                coordinates: Components { x: x + length / 2.0, y: y + DEFAULT_SIZE_Y + DEFAULT_SUB_PADDING + DEFAULT_LENGTH_SIZE },
+                coordinates: Components {
+                    x: x + length / 2.0,
+                    y: y + DEFAULT_SIZE_Y + DEFAULT_SUB_PADDING + DEFAULT_LENGTH_SIZE,
+                },
                 color: descriptor.style.subtitle_color,
                 baseline: TextBaseline::Hanging,
                 height: DEFAULT_TEXT_SIZE,
@@ -245,7 +281,7 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
         }
 
         // Wrap line after field if in network order and wrap is enabled
-        if descriptor.elements.network_order && field.wrap && i != descriptor.fields.len() - 1{
+        if descriptor.elements.network_order && field.wrap && i != descriptor.fields.len() - 1 {
             if let Some(wrap_line) = wrap_line(descriptor, &mut x, &mut y) {
                 wrap_lines.push(wrap_line);
             }
@@ -256,14 +292,26 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
     if descriptor.elements.start_symbol {
         if descriptor.elements.network_order {
             start_symbol = Some(StartSymbol {
-                coordinates: Components { x: DEFAULT_PADDING - DEFAULT_SUB_PADDING, y: DEFAULT_PADDING + DEFAULT_SIZE_Y / 2.0 },
-                size: Components { x: -DEFAULT_START_SYMBOL_X, y: DEFAULT_START_SYMBOL_Y },
+                coordinates: Components {
+                    x: DEFAULT_PADDING - DEFAULT_SUB_PADDING,
+                    y: DEFAULT_PADDING + DEFAULT_SIZE_Y / 2.0,
+                },
+                size: Components {
+                    x: -DEFAULT_START_SYMBOL_X,
+                    y: DEFAULT_START_SYMBOL_Y,
+                },
                 color: descriptor.style.subtitle_color,
             });
         } else {
             start_symbol = Some(StartSymbol {
-                coordinates: Components { x: x + DEFAULT_SUB_PADDING, y: y + DEFAULT_SIZE_Y / 2.0},
-                size: Components { x: DEFAULT_START_SYMBOL_X, y: DEFAULT_START_SYMBOL_Y },
+                coordinates: Components {
+                    x: x + DEFAULT_SUB_PADDING,
+                    y: y + DEFAULT_SIZE_Y / 2.0,
+                },
+                size: Components {
+                    x: DEFAULT_START_SYMBOL_X,
+                    y: DEFAULT_START_SYMBOL_Y,
+                },
                 color: descriptor.style.subtitle_color,
             });
         }
@@ -286,7 +334,7 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     } else {
                         var_length.insert(length, 1 as usize);
                     }
-                },
+                }
                 descriptor::FieldLength::Fixed(length) => {
                     field_texts.push(FieldText {
                         text: create_position_sub(&mut var_length, fixed_length),
@@ -314,10 +362,11 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
         field_ticks,
         field_lengths,
         wrap_lines,
-        start_symbol
+        start_symbol,
     }
 }
 
+/// Create the position subtitle string
 fn create_position_sub(var_length: &mut HashMap<String, usize>, fixed_length: usize) -> String {
     let mut result = String::new();
 
@@ -340,14 +389,25 @@ fn create_position_sub(var_length: &mut HashMap<String, usize>, fixed_length: us
     result
 }
 
-fn wrap_line(descriptor: &descriptor::ProtoDescriptor, x: &mut f64, y: &mut f64) -> Option<WrapLine> {
-    let start = Components { x: *x, y: *y + DEFAULT_SIZE_Y / 2.0 };
+/// Create a wrap line if needed
+fn wrap_line(
+    descriptor: &descriptor::ProtoDescriptor,
+    x: &mut f64,
+    y: &mut f64,
+) -> Option<WrapLine> {
+    let start = Components {
+        x: *x,
+        y: *y + DEFAULT_SIZE_Y / 2.0,
+    };
     // Delta from start Y to center of the line
     let mut center_delta = DEFAULT_SUB_PADDING + DEFAULT_SIZE_Y / 2.0;
 
     // Add new line with subtitle spacing if needed
     *y += DEFAULT_SIZE_Y;
-    if descriptor.elements.wrap_line || descriptor.elements.field_length || descriptor.elements.field_position  {
+    if descriptor.elements.wrap_line
+        || descriptor.elements.field_length
+        || descriptor.elements.field_position
+    {
         *y += 2.0 * DEFAULT_SUB_PADDING
     }
     if descriptor.elements.field_length {
@@ -358,10 +418,13 @@ fn wrap_line(descriptor: &descriptor::ProtoDescriptor, x: &mut f64, y: &mut f64)
     if descriptor.elements.field_position {
         *y += DEFAULT_TEXT_SIZE + DEFAULT_SUB_PADDING / 2.0;
     }
-    
+
     *x = DEFAULT_PADDING;
 
-    let end = Components { x: *x, y: *y + DEFAULT_SIZE_Y / 2.0 };
+    let end = Components {
+        x: *x,
+        y: *y + DEFAULT_SIZE_Y / 2.0,
+    };
 
     if descriptor.elements.wrap_line {
         Some(WrapLine {
@@ -375,5 +438,4 @@ fn wrap_line(descriptor: &descriptor::ProtoDescriptor, x: &mut f64, y: &mut f64)
     } else {
         None
     }
-    
 }
