@@ -476,13 +476,25 @@ fn wrap_line(
     {
         *y += 2.0 * DEFAULT_SUB_PADDING
     }
-    if descriptor.elements.inner_subtitles && descriptor.elements.field_length {
-        let len_y = DEFAULT_LENGTH_SIZE + DEFAULT_TEXT_SIZE + DEFAULT_SUB_PADDING / 2.0;
-        *y += len_y;
-        center_delta += len_y;
-    }
-    if descriptor.elements.inner_subtitles && descriptor.elements.field_position {
-        *y += DEFAULT_TEXT_SIZE + DEFAULT_SUB_PADDING / 2.0;
+
+    if descriptor.elements.network_order {
+        if descriptor.elements.inner_subtitles && descriptor.elements.field_length {
+            let len_y = DEFAULT_LENGTH_SIZE + DEFAULT_TEXT_SIZE + DEFAULT_SUB_PADDING / 2.0;
+            *y += len_y;
+            center_delta += len_y;
+        }
+        if descriptor.elements.inner_subtitles && descriptor.elements.field_position {
+            *y += DEFAULT_TEXT_SIZE + DEFAULT_SUB_PADDING / 2.0;
+        }
+    } else {
+        if descriptor.elements.inner_subtitles && descriptor.elements.field_position {
+            let len_y = DEFAULT_TEXT_SIZE + DEFAULT_SUB_PADDING / 2.0;
+            *y += len_y;
+            center_delta += len_y;
+        }
+        if descriptor.elements.inner_subtitles && descriptor.elements.field_length {
+            *y += DEFAULT_LENGTH_SIZE + DEFAULT_TEXT_SIZE + DEFAULT_SUB_PADDING / 2.0;
+        }
     }
 
     *x = DEFAULT_PADDING;
