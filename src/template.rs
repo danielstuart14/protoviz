@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 use hex_color::HexColor;
 use serde::Serialize;
@@ -122,24 +122,28 @@ const DEFAULT_DYN_DELTA: f64 = 0.5;
 
 /// Generate the data consumed by the SVG template
 pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
-    let mut static_fields = Vec::new();
-    let mut dynamic_fields = Vec::new();
-    let mut field_texts = Vec::new();
-    let mut field_ticks = Vec::new();
-    let mut field_lengths = Vec::new();
-    let mut wrap_lines = Vec::new();
+    let mut static_fields_rows = vec![Vec::new()];
+    let mut dynamic_fields_rows = vec![Vec::new()];
+    let mut field_texts_rows = vec![Vec::new()];
+    let mut field_ticks_rows = vec![Vec::new()];
+    let mut wrap_lines_rows = vec![Vec::new()];
     let mut start_symbol: Option<StartSymbol> = None;
 
     // Used to create the field position subtitles
-    let mut positions = Vec::new();
+    let mut positions_rows = vec![Vec::new()];
 
     // Used to create the field length subtitles
-    let mut lengths = Vec::new();
+    let mut lengths_rows = vec![Vec::new()];
+
+    // Used to offset the X coord if not in network order
+    let mut row_sizes = Vec::new();
 
     let mut x = DEFAULT_PADDING;
     let mut y = DEFAULT_PADDING;
 
     let mut max_x = 0.0;
+    let mut row_max_x = 0.0;
+    let mut last_row_y = DEFAULT_PADDING;
 
     // Reverse the fields if the elements are not in network order (big-endian)
     let fields: Box<dyn Iterator<Item = _>> = if descriptor.elements.network_order {
@@ -158,8 +162,23 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
         // Wrap line before field if not in network order and wrap is enabled
         if !descriptor.elements.network_order && field.wrap && i != 0 {
             if let Some(wrap_line) = wrap_line(descriptor, &mut x, &mut y) {
-                wrap_lines.push(wrap_line);
+                wrap_lines_rows.last_mut().unwrap().push(wrap_line);
             }
+        }
+
+        // If the field is in a new row, save the previous row size
+        if y != last_row_y {
+            row_sizes.push(row_max_x);
+            row_max_x = 0.0;
+            last_row_y = y;
+
+            static_fields_rows.push(Vec::new());
+            dynamic_fields_rows.push(Vec::new());
+            field_texts_rows.push(Vec::new());
+            field_ticks_rows.push(Vec::new());
+            wrap_lines_rows.push(Vec::new());
+            positions_rows.push(Vec::new());
+            lengths_rows.push(Vec::new());
         }
 
         let coordinates = Components { x, y };
@@ -168,19 +187,21 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
             descriptor::FieldLength::Fixed(length) => {
                 // Add field ticks
                 for i in 1..*length {
-                    field_ticks.extend([0.0, DEFAULT_SIZE_Y - DEFAULT_TICK_SIZE].into_iter().map(
-                        |y_delta| FieldTicks {
-                            coordinates: Components {
-                                x: x + i as f64 * unit_width,
-                                y: y + y_delta,
-                            },
-                            size: Components {
-                                x: DEFAULT_STROKE_WIDTH,
-                                y: DEFAULT_TICK_SIZE,
-                            },
-                            color: descriptor.style.text_color,
-                        },
-                    ));
+                    field_ticks_rows.last_mut().unwrap().extend(
+                        [0.0, DEFAULT_SIZE_Y - DEFAULT_TICK_SIZE]
+                            .into_iter()
+                            .map(|y_delta| FieldTicks {
+                                coordinates: Components {
+                                    x: x + i as f64 * unit_width,
+                                    y: y + y_delta,
+                                },
+                                size: Components {
+                                    x: DEFAULT_STROKE_WIDTH,
+                                    y: DEFAULT_TICK_SIZE,
+                                },
+                                color: descriptor.style.text_color,
+                            }),
+                    );
                 }
 
                 let size = Components {
@@ -188,7 +209,7 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     y: DEFAULT_SIZE_Y,
                 };
 
-                static_fields.push(StaticFields {
+                static_fields_rows.last_mut().unwrap().push(StaticFields {
                     background: field.color.unwrap_or(descriptor.style.field_color),
                     coordinates,
                     size: size,
@@ -196,7 +217,7 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     stroke_width: DEFAULT_STROKE_WIDTH,
                 });
 
-                field_texts.push(FieldText {
+                field_texts_rows.last_mut().unwrap().push(FieldText {
                     text: field.name.clone(),
                     coordinates: Components {
                         x: x + size.x / 2.0,
@@ -229,7 +250,7 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     y: DEFAULT_SIZE_Y,
                 };
 
-                dynamic_fields.push(DynamicFields {
+                dynamic_fields_rows.last_mut().unwrap().push(DynamicFields {
                     background: field.color.unwrap_or(descriptor.style.field_color),
                     coordinates: coordinates,
                     size,
@@ -237,7 +258,7 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     stroke_width: DEFAULT_STROKE_WIDTH,
                 });
 
-                field_texts.push(FieldText {
+                field_texts_rows.last_mut().unwrap().push(FieldText {
                     text: field.name.clone(),
                     coordinates: Components {
                         x: x + size.x1 / 2.0,
@@ -266,7 +287,10 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                 y + DEFAULT_SIZE_Y + DEFAULT_SUB_PADDING
             };
 
-            positions.push((field.length.clone(), Components { x: pos_x, y: pos_y }));
+            positions_rows
+                .last_mut()
+                .unwrap()
+                .push((field.length.clone(), Components { x: pos_x, y: pos_y }));
         }
 
         // If field length subtitles are enabled, add them
@@ -304,22 +328,32 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                 height: DEFAULT_TEXT_SIZE,
             };
 
-            lengths.push((length_sub, length_text));
+            lengths_rows
+                .last_mut()
+                .unwrap()
+                .push((length_sub, length_text));
         }
 
         x += length;
 
-        if x > max_x {
-            max_x = x;
+        if x > row_max_x {
+            row_max_x = x;
+
+            if x > max_x {
+                max_x = x;
+            }
         }
 
         // Wrap line after field if in network order and wrap is enabled
         if descriptor.elements.network_order && field.wrap && i != descriptor.fields.len() - 1 {
             if let Some(wrap_line) = wrap_line(descriptor, &mut x, &mut y) {
-                wrap_lines.push(wrap_line);
+                wrap_lines_rows.last_mut().unwrap().push(wrap_line);
             }
         }
     }
+
+    // Add the last row size
+    row_sizes.push(row_max_x);
 
     // Add start symbol if enabled
     if descriptor.elements.start_symbol {
@@ -347,6 +381,115 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                 },
                 color: descriptor.style.subtitle_color,
             });
+        }
+    }
+
+    // Flatten the rows and apply the offset if needed (align to the right if not in network order)
+    let static_fields = static_fields_rows
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, row)| {
+            let row_sizes = &row_sizes;
+            row.into_iter().map(move |mut field| {
+                if !descriptor.elements.network_order {
+                    field.coordinates.x += max_x - row_sizes[i];
+                }
+                field
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let dynamic_fields = dynamic_fields_rows
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, row)| {
+            let row_sizes = &row_sizes;
+            row.into_iter().map(move |mut field| {
+                if !descriptor.elements.network_order {
+                    field.coordinates.x += max_x - row_sizes[i];
+                }
+                field
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let field_ticks = field_ticks_rows
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, row)| {
+            let row_sizes = &row_sizes;
+            row.into_iter().map(move |mut field| {
+                if !descriptor.elements.network_order {
+                    field.coordinates.x += max_x - row_sizes[i];
+                }
+                field
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let wrap_lines = wrap_lines_rows
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, row)| {
+            let row_sizes = &row_sizes;
+            row.into_iter().map(move |mut field| {
+                if !descriptor.elements.network_order {
+                    field.start.x += max_x - row_sizes[i];
+                    field.end.x += max_x - row_sizes[i + 1];
+                }
+                field
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let mut lengths = lengths_rows
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, row)| {
+            let row_sizes = &row_sizes;
+            row.into_iter()
+                .map(move |(mut length_sub, mut length_text)| {
+                    if !descriptor.elements.network_order {
+                        length_sub.coordinates.x += max_x - row_sizes[i];
+                        length_text.coordinates.x += max_x - row_sizes[i];
+                    }
+                    (length_sub, length_text)
+                })
+        })
+        .collect::<Vec<_>>();
+
+    let mut positions = positions_rows
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, row)| {
+            let row_sizes = &row_sizes;
+            row.into_iter().map(move |(length, mut position)| {
+                if !descriptor.elements.network_order {
+                    position.x += max_x - row_sizes[i];
+                }
+                (length, position)
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let mut field_texts = field_texts_rows
+        .into_iter()
+        .enumerate()
+        .flat_map(|(i, row)| {
+            let row_sizes = &row_sizes;
+            row.into_iter().map(move |mut field| {
+                if !descriptor.elements.network_order {
+                    field.coordinates.x += max_x - row_sizes[i];
+                }
+                field
+            })
+        })
+        .collect::<Vec<_>>();
+
+    // Apply offset to the start symbol if needed
+    if !descriptor.elements.network_order {
+        if let Some(start_symbol) = start_symbol.as_mut() {
+            start_symbol.coordinates.x += max_x - row_sizes.last().unwrap();
         }
     }
 
@@ -394,6 +537,8 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
             }
         }
     }
+
+    let mut field_lengths = Vec::new();
 
     // If field length subtitles are enabled, add them
     if descriptor.elements.field_length {
