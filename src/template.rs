@@ -508,6 +508,20 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                 break;
             }
 
+            let baseline = if descriptor.elements.network_order {
+                TextBaseline::Auto
+            } else {
+                TextBaseline::Hanging
+            };
+
+            field_texts.push(FieldText {
+                text: create_position_sub(&mut var_length, fixed_length),
+                coordinates: position,
+                color: descriptor.style.subtitle_color,
+                baseline: baseline,
+                height: DEFAULT_TEXT_SIZE,
+            });
+
             match length {
                 descriptor::FieldLength::Variable(length) => {
                     let length = length.trim().to_owned();
@@ -518,20 +532,6 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     }
                 }
                 descriptor::FieldLength::Fixed(length) => {
-                    let baseline = if descriptor.elements.network_order {
-                        TextBaseline::Auto
-                    } else {
-                        TextBaseline::Hanging
-                    };
-
-                    field_texts.push(FieldText {
-                        text: create_position_sub(&mut var_length, fixed_length),
-                        coordinates: position,
-                        color: descriptor.style.subtitle_color,
-                        baseline: baseline,
-                        height: DEFAULT_TEXT_SIZE,
-                    });
-
                     fixed_length += length;
                 }
             }
