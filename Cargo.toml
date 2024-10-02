@@ -3,7 +3,7 @@ members = ["examples/*"]
 
 [package]
 name = "protoviz"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 authors = ["Daniel Stuart <daniel.stuart14@gmail.com>"]
 license = "MIT"
@@ -16,10 +16,10 @@ keywords = ["protocol", "documentation", "svg", "binary"]
 
 [dependencies]
 hex_color = { version = "3.0.0", features = ["serde"] }
-serde = { version = "1.0.203", features = ["derive"] }
+serde = { version = "1.0.210", features = ["derive"] }
 tera = { version = "1.20.0", default-features = false }
-thiserror = "1.0.61"
+thiserror = "1.0.64"
 
 [dev-dependencies]
-tokio = { version = "1.38.0", features = ["full"] }
-axum = "0.7.5"
+tokio = { version = "1.40.0", features = ["full"] }
+axum = "0.7.7"

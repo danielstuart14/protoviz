@@ -524,11 +524,23 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
 
             match length {
                 descriptor::FieldLength::Variable(length) => {
-                    let length = length.trim().to_owned();
-                    if let Some(value) = var_length.get(&length) {
-                        var_length.insert(length, *value + 1);
+                    let length = length.trim();
+                    let first_letter = length.chars().position(|c| !c.is_digit(10)).unwrap_or(0);
+
+                    let (length_name, length_count) = if first_letter == 0 {
+                        (length, 1)
                     } else {
-                        var_length.insert(length, 1 as usize);
+                        let count = length[..first_letter]
+                            .parse::<usize>()
+                            .expect("Failed to parse dynamic length");
+
+                        (&length[first_letter..], count)
+                    };
+
+                    if let Some(value) = var_length.get_mut(length_name) {
+                        *value += length_count;
+                    } else {
+                        var_length.insert(length_name.to_owned(), length_count);
                     }
                 }
                 descriptor::FieldLength::Fixed(length) => {
