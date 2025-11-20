@@ -34,7 +34,7 @@
 
 {#- Iterate over all available field texts -#}
 {%- for field in data.field_texts %}
-  <text x="{{field.coordinates.x}}" y="{{field.coordinates.y}}" fill="{{field.color}}" dominant-baseline="{{field.baseline}}" text-anchor="middle" font-size="{{field.height}}">{{field.text}}</text>
+  <text x="{{field.coordinates.x}}" y="{{field.coordinates.y}}" fill="{{field.color}}" dominant-baseline="{{field.baseline}}" text-anchor="middle" font-size="{{field.height}}" {% if field.is_to_big_for_container %} textLength="{{field.length}}" lengthAdjust="spacingAndGlyphs" {% endif %}>{{field.text}}</text>
 {%- endfor %}
 
 {#- Iterate over all available field lengths -#}

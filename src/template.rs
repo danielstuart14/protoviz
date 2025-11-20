@@ -54,6 +54,8 @@ struct FieldText {
     color: HexColor,
     baseline: TextBaseline,
     height: f64,
+    length: f64,
+    is_to_big_for_container : bool
 }
 
 #[derive(Debug, Serialize)]
@@ -112,6 +114,8 @@ const DEFAULT_TEXT_SIZE: f64 = 16.0;
 const DEFAULT_START_SYMBOL_X: f64 = 10.0;
 const DEFAULT_START_SYMBOL_Y: f64 = 20.0;
 const DEFAULT_DYN_SPACING_VALUE: f64 = 10.0;
+const DEFAULT_TEXT_GLIPH_SIZE: f64  = DEFAULT_TEXT_SIZE/2.0; 
+
 
 // PERCENTAGE FROM UNIT_WIDTH
 const DEFAULT_DYN_LENGTH_1: f64 = 2.0 / 3.0;
@@ -119,6 +123,14 @@ const DEFAULT_DYN_LENGTH_2: f64 = 1.0 / 3.0;
 const DEFAULT_DYN_SPACING_UPPER: f64 = 0.2;
 const DEFAULT_DYN_SPACING_LOWER: f64 = 0.5;
 const DEFAULT_DYN_DELTA: f64 = 0.5;
+
+
+
+/// Helper Function to adjust the size of the text accordingly to the text 
+pub fn is_bigger_than_container(string:&String, container_size: f64) -> bool 
+{
+    (string.len() as f64) * DEFAULT_TEXT_GLIPH_SIZE > container_size 
+}
 
 /// Generate the data consumed by the SVG template
 pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
@@ -216,7 +228,7 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     stroke_color: descriptor.style.text_color,
                     stroke_width: DEFAULT_STROKE_WIDTH,
                 });
-
+                
                 field_texts_rows.last_mut().unwrap().push(FieldText {
                     text: field.name.clone(),
                     coordinates: Components {
@@ -226,6 +238,8 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     color: descriptor.style.text_color,
                     baseline: TextBaseline::Middle,
                     height: DEFAULT_TEXT_SIZE,
+                    length: size.x,
+                    is_to_big_for_container : is_bigger_than_container(&field.name, size.x)
                 });
 
                 size.x
@@ -267,6 +281,8 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                     color: descriptor.style.text_color,
                     baseline: TextBaseline::Middle,
                     height: DEFAULT_TEXT_SIZE,
+                    length :  size.x1,
+                    is_to_big_for_container : is_bigger_than_container(&field.name, size.x1)
                 });
 
                 size.x1 + size.spacing + size.x2
@@ -326,6 +342,8 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                 color: descriptor.style.subtitle_color,
                 baseline: baseline,
                 height: DEFAULT_TEXT_SIZE,
+                length : DEFAULT_TEXT_SIZE, 
+                is_to_big_for_container : false
             };
 
             lengths_rows
@@ -514,12 +532,17 @@ pub fn generate_data(descriptor: &descriptor::ProtoDescriptor) -> TemplateData {
                 TextBaseline::Hanging
             };
 
+            let position_sub  = create_position_sub(&mut var_length, fixed_length); 
+            let position_stub_to_compare = position_sub.clone(); 
+
             field_texts.push(FieldText {
-                text: create_position_sub(&mut var_length, fixed_length),
+                text:position_sub,
                 coordinates: position,
                 color: descriptor.style.subtitle_color,
                 baseline: baseline,
                 height: DEFAULT_TEXT_SIZE,
+                length: position.x, 
+                is_to_big_for_container: is_bigger_than_container(&position_stub_to_compare, position.x)
             });
 
             match length {
