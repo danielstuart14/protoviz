@@ -1,5 +1,6 @@
 use hex_color::HexColor;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 /// Enum to hold the length of a field
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
@@ -9,11 +10,11 @@ pub enum FieldLength {
     Variable(String),
 }
 
-impl ToString for FieldLength {
-    fn to_string(&self) -> String {
+impl Display for FieldLength {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FieldLength::Fixed(length) => length.to_string(),
-            FieldLength::Variable(name) => name.clone(),
+            FieldLength::Fixed(length) => write!(f, "{}", length),
+            FieldLength::Variable(name) => write!(f, "{}", name),
         }
     }
 }

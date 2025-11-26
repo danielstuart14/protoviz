@@ -1,5 +1,19 @@
 {# SVG start -#}
 <svg viewBox="0 0 {{data.size.x}} {{data.size.y}}" xmlns="http://www.w3.org/2000/svg" style="background-color:{{data.background}}">
+<style>
+  .svg_text {
+    width:100%;
+    height:100%;
+    text-align:center;
+    align-content:center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding-left: {{data.text_padding}}px;
+    padding-right: {{data.text_padding}}px;
+  }
+</style>
+
 {#- Iterate over all available static fields -#}
 {%- for field in data.static_fields %}
   {%- set coord_x = field.coordinates.x %}
@@ -18,10 +32,10 @@
   {%- set size_y = field.size.y %}
   {%- set spacing = field.size.spacing %}
   {%- set delta = field.size.delta %}
-  
+
   {#- First polygon (left) #}
   <polygon points="{{coord_x}},{{coord_y}} {{coord_x}},{{coord_y + size_y}} {{coord_x + size_x1 - delta}},{{coord_y + size_y}} {{coord_x + size_x1 + delta}},{{coord_y}}" fill="{{field.background}}" style="stroke:{{field.stroke_color}};stroke-width:{{field.stroke_width}}" />
-  
+
   {#- Second polygon (right) #}
   {%- set coord_x = coord_x + size_x1 + spacing %}
   <polygon points="{{coord_x + delta}},{{coord_y}} {{coord_x - delta}},{{coord_y + size_y}} {{coord_x + size_x2}},{{coord_y + size_y}} {{coord_x + size_x2}},{{coord_y}}" fill="{{field.background}}" style="stroke:{{field.stroke_color}};stroke-width:{{field.stroke_width}}" />
@@ -34,7 +48,9 @@
 
 {#- Iterate over all available field texts -#}
 {%- for field in data.field_texts %}
-  <text x="{{field.coordinates.x}}" y="{{field.coordinates.y}}" fill="{{field.color}}" dominant-baseline="{{field.baseline}}" text-anchor="middle" font-size="{{field.height}}">{{field.text}}</text>
+  <foreignObject x="{{field.coordinates.x}}" y="{{field.coordinates.y}}" width="{{field.size.x}}" height="{{field.size.y}}">
+    <div xmlns="http://www.w3.org/1999/xhtml" class="svg_text" style="font-size:{{field.height}}px;color:{{field.color}};padding-top:{{field.padding}}px;padding-bottom:{{field.padding}}px;">{{field.text}}</div>
+  </foreignObject>
 {%- endfor %}
 
 {#- Iterate over all available field lengths -#}

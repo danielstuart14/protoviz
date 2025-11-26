@@ -12,47 +12,68 @@ use errors::Error;
 use template::generate_data;
 use tera::{Context, Tera};
 
-/// Render the SVG image of the protocol
-pub fn render(descriptor: &descriptor::ProtoDescriptor) -> Result<String, Error> {
-    if descriptor.style.unit_width < 10 {
-        return Err(Error::FormatError(
-            "Unit width cannot be less than 10".to_string(),
-        ));
-    }
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+/// ProtoViz
+pub struct ProtoViz {
+    /// SVG image of the protocol
+    pub svg: String,
+    /// Width of the SVG image
+    pub width: f64,
+    /// Height of the SVG image
+    pub height: f64,
+}
 
-    if descriptor.style.dyn_units < 3 {
-        return Err(Error::FormatError(
-            "Dynamic units cannot be less than 3".to_string(),
-        ));
-    }
-
-    if descriptor.fields.is_empty() {
-        return Err(Error::FormatError("No fields provided".to_string()));
-    }
-
-    for field in &descriptor.fields {
-        if let descriptor::FieldLength::Fixed(0) = field.length {
+impl ProtoViz {
+    /// Render the SVG image of the protocol
+    pub fn render(descriptor: &descriptor::ProtoDescriptor) -> Result<Self, Error> {
+        if descriptor.style.unit_width < 10 {
             return Err(Error::FormatError(
-                "Field length cannot be zero".to_string(),
+                "Unit width cannot be less than 10".to_string(),
             ));
         }
 
-        if let descriptor::FieldLength::Variable(name) = &field.length {
-            if name.is_empty() {
+        if descriptor.style.dyn_units < 3 {
+            return Err(Error::FormatError(
+                "Dynamic units cannot be less than 3".to_string(),
+            ));
+        }
+
+        if descriptor.fields.is_empty() {
+            return Err(Error::FormatError("No fields provided".to_string()));
+        }
+
+        for field in &descriptor.fields {
+            if let descriptor::FieldLength::Fixed(0) = field.length {
                 return Err(Error::FormatError(
-                    "Field length cannot be empty".to_string(),
+                    "Field length cannot be zero".to_string(),
                 ));
             }
+
+            if let descriptor::FieldLength::Variable(name) = &field.length {
+                if name.is_empty() {
+                    return Err(Error::FormatError(
+                        "Field length cannot be empty".to_string(),
+                    ));
+                }
+            }
         }
+
+        let data = generate_data(descriptor);
+
+        let mut context = Context::new();
+
+        context.insert("data", &data);
+
+        let svg = Tera::one_off(include_str!("../template.svg"), &context, false)
+            .map_err(Error::TeraError)?;
+
+        Ok(ProtoViz {
+            svg,
+            width: data.size.x,
+            height: data.size.y,
+        })
     }
-
-    let data = generate_data(descriptor);
-
-    let mut context = Context::new();
-
-    context.insert("data", &data);
-
-    Tera::one_off(include_str!("../template.svg"), &context, false).map_err(|e| Error::TeraError(e))
 }
 
 #[cfg(test)]
@@ -114,8 +135,8 @@ mod tests {
             ],
         };
 
-        let result = render(&descriptor).unwrap();
-        assert!(result.contains("field1"));
-        assert!(result.contains("field3"));
+        let result = ProtoViz::render(&descriptor).unwrap();
+        assert!(result.svg.contains("field1"));
+        assert!(result.svg.contains("field3"));
     }
 }

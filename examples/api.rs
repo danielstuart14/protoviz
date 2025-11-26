@@ -20,7 +20,7 @@ async fn main() {
 }
 
 async fn handler(Json(descriptor): Json<ProtoDescriptor>) -> Result<Html<String>, StatusCode> {
-    let result = match protoviz::render(&descriptor) {
+    let result = match protoviz::ProtoViz::render(&descriptor) {
         Ok(result) => result,
         Err(e) => {
             println!("Error: {:?}", e);
@@ -31,5 +31,5 @@ async fn handler(Json(descriptor): Json<ProtoDescriptor>) -> Result<Html<String>
         }
     };
 
-    Ok(Html(result))
+    Ok(Html(result.svg))
 }
